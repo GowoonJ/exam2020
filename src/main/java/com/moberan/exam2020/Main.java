@@ -13,26 +13,24 @@ public class Main {
 	private static String tasks(){
 		TestLibrary lib = new TestLibrary();
 		final String[] result = new String[1];
-
-		final boolean[] lockOff = {false};
-
-		synchronized (lock){
 			lib.firstTask(new Task() {
 				@Override
 				public  void taskCallback(String s) {
 					result[0] = lib.secondTask(s);
-					lockOff[0] = true;
-					System.out.println("second Task: "+result[0]);
-					System.out.println(s);
+					synchronized (lock){
+						lock.notify();
+					}
 				}
 			});
-			try {
-				lock.wait(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			synchronized (lock){
+				while(result[0] == null){
+					try {
+						lock.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 			}
-			if (lockOff[0])	lock.notify();
-		}
 		return result[0];
 	}
 }
